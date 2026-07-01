@@ -1,6 +1,5 @@
 
 use std::net::TcpListener;
-use env_logger::Env;
 use secrecy::ExposeSecret;
 use sqlx::{PgPool};
 use zero2prod::{configuration::get_configuration, startup::run, telemetry::{get_subscriber, init_subscriber}};

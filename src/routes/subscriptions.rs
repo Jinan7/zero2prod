@@ -1,5 +1,7 @@
 use actix_web::{HttpResponse, Responder, web};
+use chrono::Utc;
 use sqlx::{PgPool};
+use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
@@ -29,6 +31,7 @@ pub async fn subscribe (form: web::Form<FormData>, connection: web::Data<PgPool>
             HttpResponse::InternalServerError().finish()
         }
     }
+
     
     
 }
