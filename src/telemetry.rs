@@ -2,7 +2,7 @@
 use tracing::{ Subscriber, subscriber::set_global_default};
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_log::LogTracer;
-use tracing_subscriber::{EnvFilter, Registry, fmt::{MakeWriter, format}, layer::SubscriberExt};
+use tracing_subscriber::{EnvFilter, Registry, fmt::{MakeWriter}, layer::SubscriberExt};
 
 pub fn get_subscriber<Sink>(name: String, env_filter: String, sink: Sink) -> impl Subscriber + Send + Sync 
 where 
