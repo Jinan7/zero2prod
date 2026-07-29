@@ -1,10 +1,9 @@
 use std::net::TcpListener;
-
-use secrecy::ExposeSecret;
-use sqlx::{Connection, Executor, PgConnection, PgPool};
+use actix_web::error::DispatchError::Body;
+use once_cell::sync::Lazy;
+use sqlx::{Connection, Executor, PgConnection, PgPool, postgres::PgPoolOptions};
 use uuid::Uuid;
 use zero2prod::{configuration::{DatabaseSettings, get_configuration}, startup::run, telemetry::{get_subscriber, init_subscriber}};
-use once_cell::sync::Lazy;
 
 static TRACING: Lazy<()> = Lazy::new(|| {
 
@@ -114,6 +113,31 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
     }
 }
 
+#[tokio::test]
+async fn subscribe_returns_a_200_when_fields_are_present_but_empty() {
+
+    let app = spawn_app().await;
+    let client = reqwest::Client::new();
+    let test_cases = vec![
+        ("name=&email=ursula_le_guin%40gmail.com", "empty name"),
+        ("name=Ursula&email=", "empty email"),
+        ("name=Ursula&email=definitely-not-an-email", "invalid email"),
+    ];
+
+    for (body, description) in test_cases {
+
+        let response = client
+        .post(&format!("{}/subscriptions", &app.address))
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(body)
+        .send()
+        .await
+        .expect("Failed to execute request");
+
+        
+        assert_eq!(200, response.status().as_u16(), "The API did not return a 200 OK when the payload was {}.",description);
+    }
+}
 async fn spawn_app() -> TestApp {
 
     
@@ -148,7 +172,7 @@ pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
     .await
     .expect("Failed to create database");
 
-    let connection_pool = PgPool::connect(&config.connection_string().expose_secret())
+    let connection_pool = PgPoolOptions::new().connect_with(config.with_db())
     .await
     .expect("Failed to connect to postgres");
 
