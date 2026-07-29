@@ -1,11 +1,4 @@
-use std::fmt::format;
-
 use unicode_segmentation::UnicodeSegmentation;
-
-pub struct NewSubscriber {
-    pub email: String,
-    pub name: SubscriberName,
-}
 
 #[derive(Debug)]
 pub struct SubscriberName(String);
