@@ -26,7 +26,7 @@ impl SubscriberEmail {
 #[cfg(test)]
 mod test {
 
-    use claims::{assert_err, assert_ok};
+    use claims::{assert_err};
     use fake::{Fake, faker::internet::en::SafeEmail};
     use super::SubscriberEmail;
 
