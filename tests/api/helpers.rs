@@ -1,4 +1,6 @@
+use actix_web::error::DispatchError::Body;
 use once_cell::sync::Lazy;
+use reqwest::Request;
 use zero2prod::{configuration::{DatabaseSettings, get_configuration}, startup::{Application, get_connection_pool}, telemetry::{get_subscriber, init_subscriber}};
 use sqlx::{Connection, Executor, PgConnection, PgPool, postgres::PgPoolOptions};
 use uuid::Uuid;
@@ -33,6 +35,17 @@ pub struct TestApp {
     pub db_pool: PgPool,
 }
 
+impl TestApp {
+    pub async fn post_subscriptions(&self, body: String) -> reqwest::Response {
+        reqwest::Client::new()
+            .post(&format!("{}/subscriptions", &self.address))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(body)
+            .send()
+            .await
+            .expect("Failed to execute request")
+    }
+}
 pub async fn spawn_app() -> TestApp {
 
     
