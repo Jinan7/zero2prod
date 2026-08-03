@@ -1,4 +1,4 @@
-use reqwest::{Client, StatusCode};
+use reqwest::{Client};
 use secrecy::{ExposeSecret, Secret};
 
 use crate::domain::SubscriberEmail;
@@ -58,7 +58,7 @@ impl EmailClient {
             text_body: text_content,
         };
 
-        let builder = self.http_client
+        self.http_client
             .post(&url)
             .header(
                 "X-Postmark-Server-Token", 
@@ -77,12 +77,11 @@ impl EmailClient {
 #[cfg(test)]
 mod test {
 
-    use actix_web::middleware::ErrorHandlerResponse::Response;
     use claims::{assert_err, assert_ok};
     use fake::{Fake, Faker, faker::{internet::en::SafeEmail, lorem::en::{Paragraph, Sentence}}};
     use secrecy::Secret;
     use wiremock::{Mock, MockServer, ResponseTemplate, matchers::{any, header, header_exists, method, path}};
-    use crate::{domain::SubscriberEmail, email_client::{self, EmailClient}};
+    use crate::{domain::SubscriberEmail, email_client::{EmailClient}};
 
 
     struct SendEmailBodyMatcher;

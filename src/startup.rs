@@ -5,7 +5,6 @@ use sqlx::postgres::PgPoolOptions;
 use tracing_actix_web::TracingLogger;
 use crate::configuration::DatabaseSettings;
 use crate::configuration::Settings;
-use crate::email_client;
 use crate::email_client::EmailClient;
 use crate::routes::health_check;
 use crate::routes::subscribe;

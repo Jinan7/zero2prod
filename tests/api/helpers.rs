@@ -1,8 +1,7 @@
 use once_cell::sync::Lazy;
-use zero2prod::{configuration::{DatabaseSettings, get_configuration}, email_client::EmailClient, startup::{Application, get_connection_pool, run}, telemetry::{get_subscriber, init_subscriber}};
+use zero2prod::{configuration::{DatabaseSettings, get_configuration}, startup::{Application, get_connection_pool}, telemetry::{get_subscriber, init_subscriber}};
 use sqlx::{Connection, Executor, PgConnection, PgPool, postgres::PgPoolOptions};
 use uuid::Uuid;
-use std::net::TcpListener;
 
 
 static TRACING: Lazy<()> = Lazy::new(|| {
