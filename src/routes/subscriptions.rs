@@ -6,6 +6,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use crate::domain::NewSubscriber;
 use crate::domain::SubscriberEmail;
 use crate::domain::SubscriberName;
+use crate::email_client::EmailClient;
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
@@ -31,7 +32,7 @@ pub fn parse_subscriber(form: FormData) -> Result<NewSubscriber, String> {
     )
 
 )]
-pub async fn subscribe (form: web::Form<FormData>, connection: web::Data<PgPool> ) -> HttpResponse {
+pub async fn subscribe (form: web::Form<FormData>, connection: web::Data<PgPool>, email_client: web::Data<EmailClient> ) -> HttpResponse {
 
 
     
@@ -41,21 +42,46 @@ pub async fn subscribe (form: web::Form<FormData>, connection: web::Data<PgPool>
         Err(_) => return HttpResponse::BadRequest().finish(),
     };
 
-    match insert_subscriber(&connection, &new_subscriber)
-    .await {
 
-        Ok(_) => {
-            HttpResponse::Ok().finish()
-        },
-        Err(_e) => {
-            HttpResponse::InternalServerError().finish()
-        }
+    if insert_subscriber(&connection, &new_subscriber).await.is_err() {
+        return HttpResponse::InternalServerError().finish();
     }
 
-    
+    if send_confirmation_email(&email_client, new_subscriber).await.is_err() {
+        return HttpResponse::InternalServerError().finish();
+    }
+
+    HttpResponse::Ok().finish()
     
 }
 
+
+#[tracing::instrument(
+    name = "Send a confirmation email to a new subscriber",
+    skip(email_client, new_subscriber)
+)]
+pub async fn send_confirmation_email(email_client: &EmailClient, new_subscriber: NewSubscriber) -> Result<(), reqwest::Error> {
+    let confirmation_link = "https://there-is-no-such-domain.com/subscriptions/confirm";
+
+    let plain_body = format!(
+        "Welcome to our newsletter!\nVisit {} to comfirm your subscription",
+        confirmation_link
+    );
+
+    let html_body = format!(
+            "Welcome to our newsletter<br />\
+            Click <a href=\"{}\"></a> to confirm your subscription.",
+            confirmation_link
+        );
+
+    email_client.send_email(
+        new_subscriber.email,
+        "Welcome!",
+        &html_body,
+        &plain_body,
+    )
+    .await
+}
 
 #[tracing::instrument(
     name = "Saving new subscriber details in the database.",

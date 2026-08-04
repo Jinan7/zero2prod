@@ -3,6 +3,7 @@ use secrecy::{ExposeSecret, Secret};
 
 use crate::domain::SubscriberEmail;
 
+#[derive(Debug)]
 pub struct EmailClient {
     http_client: Client,
     base_url: String,
@@ -19,6 +20,7 @@ struct SendEmailRequest<'a> {
     html_body: &'a str,
     text_body: &'a str,
 }
+
 
 impl EmailClient {
 
