@@ -7,6 +7,7 @@ use crate::domain::NewSubscriber;
 use crate::domain::SubscriberEmail;
 use crate::domain::SubscriberName;
 use crate::email_client::EmailClient;
+use crate::startup::ApplicationBaseUrl;
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
@@ -25,14 +26,14 @@ pub fn parse_subscriber(form: FormData) -> Result<NewSubscriber, String> {
 
 #[tracing::instrument(
     name = "Adding a new subscriber",
-    skip(form, connection),
+    skip(form, connection, base_url),
     fields(
         subscriber_email = %form.email,
         subscriber_name = %form.name
     )
 
 )]
-pub async fn subscribe (form: web::Form<FormData>, connection: web::Data<PgPool>, email_client: web::Data<EmailClient> ) -> HttpResponse {
+pub async fn subscribe (form: web::Form<FormData>, connection: web::Data<PgPool>, email_client: web::Data<EmailClient>, base_url: web::Data<ApplicationBaseUrl> ) -> HttpResponse {
 
 
     
@@ -47,7 +48,7 @@ pub async fn subscribe (form: web::Form<FormData>, connection: web::Data<PgPool>
         return HttpResponse::InternalServerError().finish();
     }
 
-    if send_confirmation_email(&email_client, new_subscriber).await.is_err() {
+    if send_confirmation_email(&email_client, new_subscriber, &base_url.0).await.is_err() {
         return HttpResponse::InternalServerError().finish();
     }
 
@@ -60,8 +61,8 @@ pub async fn subscribe (form: web::Form<FormData>, connection: web::Data<PgPool>
     name = "Send a confirmation email to a new subscriber",
     skip(email_client, new_subscriber)
 )]
-pub async fn send_confirmation_email(email_client: &EmailClient, new_subscriber: NewSubscriber) -> Result<(), reqwest::Error> {
-    let confirmation_link = "https://there-is-no-such-domain.com/subscriptions/confirm";
+pub async fn send_confirmation_email(email_client: &EmailClient, new_subscriber: NewSubscriber, base_url: &str) -> Result<(), reqwest::Error> {
+    let confirmation_link = format!("{}/subscriptions/confirm?subscription_token=mytoken", base_url);
 
     let plain_body = format!(
         "Welcome to our newsletter!\nVisit {} to comfirm your subscription",
