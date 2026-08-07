@@ -160,7 +160,7 @@ pub async fn send_confirmation_email(email_client: &EmailClient, new_subscriber:
 
     let html_body = format!(
             "Welcome to our newsletter<br />\
-            Click <a href=\"{}\"></a> to confirm your subscription.",
+            Click <a href=\"{}\">here</a> to confirm your subscription.",
             confirmation_link
         );
 
