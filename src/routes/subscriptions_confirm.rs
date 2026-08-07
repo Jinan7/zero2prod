@@ -1,6 +1,35 @@
-use actix_web::{HttpResponse, web};
+use std::{error::Error, fmt::Debug};
+
+use actix_web::{HttpResponse, ResponseError, http::StatusCode, web};
+use anyhow::Context;
 use sqlx::{PgPool};
 use uuid::Uuid;
+
+use crate::routes::error_chain_fmt;
+
+
+#[derive(thiserror::Error)]
+pub enum ConfirmError {
+    #[error(transparent)]
+    UnexpectedError(#[from] anyhow::Error),
+    #[error("No subscriber found for given token")]
+    UnknownTokenError
+}
+
+impl ResponseError for ConfirmError {
+    fn status_code(&self) -> actix_web::http::StatusCode {
+
+        match self {
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
+
+impl Debug for ConfirmError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        error_chain_fmt(self, f)
+    }
+}
 
 #[derive(serde::Deserialize)]
 pub struct Parameters {
@@ -11,26 +40,17 @@ pub struct Parameters {
     name = "Confirm a pending subscriber",
     skip(parameters, pool)
 )]
-pub async fn confirm(parameters: web::Query<Parameters>, pool: web::Data<PgPool>) -> HttpResponse {
+pub async fn confirm(parameters: web::Query<Parameters>, pool: web::Data<PgPool>) -> Result<HttpResponse, ConfirmError> {
 
-    let id = match get_subscriber_id_from_token(
+    let id = get_subscriber_id_from_token(
         &pool,
         &parameters.subscription_token
-    ).await {
-        Ok(id) => id,
-        Err(_) => return HttpResponse::InternalServerError().finish(),
-    };
+    ).await.context("Failed to get subscriber id from token")?
+    .ok_or(ConfirmError::UnknownTokenError)?;
 
-
-    match id {
-        None => HttpResponse::Unauthorized().finish(),
-        Some(subscriber_id) => {
-            if confirm_subscriber(&pool, subscriber_id).await.is_err() {
-                return HttpResponse::InternalServerError().finish()
-            }
-            HttpResponse::Ok().finish()
-        }
-    }
+    confirm_subscriber(&pool, id).await.context("Failed to confirm subscriber")?;
+    Ok(HttpResponse::Ok().finish())
+       
 }
 
 #[tracing::instrument(
@@ -46,7 +66,6 @@ pub async fn confirm_subscriber(pool: &PgPool, subscriber_id: Uuid) -> Result<()
     .execute(pool)
     .await
     .map_err(|e| {
-        tracing::error!("Failed to execute query: {:?}", e);
         e
     })?;
 
@@ -64,7 +83,6 @@ pub async fn get_subscriber_id_from_token(pool: &PgPool, subscription_token: &st
     .fetch_optional(pool)
     .await
     .map_err(|e| {
-        tracing::error!("Failed to execute query: {:?}", e);
         e
     })?;
     Ok(result.map(|r| r.subscriber_id))
