@@ -1,7 +1,5 @@
 use actix_web::{HttpResponse, web};
-use rand::rngs::adapter::ReseedingRng;
-use sqlx::{PgPool, Error};
-use tracing::subscriber;
+use sqlx::{PgPool};
 use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
