@@ -37,7 +37,7 @@ pub struct Parameters {
 }
 
 #[tracing::instrument(
-    name = "Confirm a pending subscriber",
+    name = "CONFIRM A PENDING SUBSCRIBER",
     skip(parameters, pool)
 )]
 pub async fn confirm(parameters: web::Query<Parameters>, pool: web::Data<PgPool>) -> Result<HttpResponse, ConfirmError> {
@@ -54,7 +54,7 @@ pub async fn confirm(parameters: web::Query<Parameters>, pool: web::Data<PgPool>
 }
 
 #[tracing::instrument(
-    name = "Mark subscriber as subscribed",
+    name = "MARK SUBSCRIBER AS SUBSCRIBED",
     skip(subscriber_id, pool)
 )]
 pub async fn confirm_subscriber(pool: &PgPool, subscriber_id: Uuid) -> Result<(), sqlx::Error> {

@@ -126,7 +126,7 @@ pub async fn subscribe (form: web::Form<FormData>, connection: web::Data<PgPool>
 }
 
 #[tracing::instrument(
-    name = "Store subscription token in the database",
+    name = "STORE SUBSCRIPTION TOKEN IN DATABASE",
     skip(subscription_token, transaction)
 )]
 pub async fn store_token(transaction: &mut Transaction<'_, Postgres>, subscriber_id: Uuid, subscription_token: &str) -> Result<(), StoreTokenError> {
@@ -147,7 +147,7 @@ pub async fn store_token(transaction: &mut Transaction<'_, Postgres>, subscriber
 }
 
 #[tracing::instrument(
-    name = "Send a confirmation email to a new subscriber",
+    name = "SEND A CONFIRMATION EMAIL TO NEW SUBSCRIBER",
     skip(email_client, new_subscriber, base_url, subscription_token)
 )]
 pub async fn send_confirmation_email(email_client: &EmailClient, new_subscriber: NewSubscriber, base_url: &str, subscription_token: &str) -> Result<(), reqwest::Error> {
